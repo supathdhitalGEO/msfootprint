@@ -1,0 +1,18 @@
+[tool.poetry]
+name = "msfootprint"
+version = "0.1.0"
+description = "A tool to extract the microsoft building footprints with user defined boundary."
+authors = ["supathdhitalGEO <sdhital@crimson.ua.edu>"]
+readme = "README.md"
+packages = [{include = "msfootprint", from = "src"}]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+geemap = "^0.35.1"
+geopandas = "^1.0.1"
+fiona = "^1.10.1"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
