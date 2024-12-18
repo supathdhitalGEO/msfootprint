@@ -47,6 +47,8 @@ msf.getBuildingFootprint(country, boundary_shp, out_dir)
 ```
 It will save the building footprint as geojson format in designated location.
 
+**For more information about how building footprints are hosted online and to learn about the tables and folder structure, [visit here](https://gee-community-catalog.org/projects/msbuildings/).**
+
 ## For Any Information
 
 Feel free to reach out to me:
