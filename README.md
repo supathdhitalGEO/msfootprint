@@ -1,3 +1,9 @@
+
+[![Version](https://img.shields.io/github/v/release/supathdhitalGEO/msfootprint)](https://github.com/supathdhitalGEO/msfootprint/releases)
+![Views](https://hits.seeyoufarm.com/api/count/incr/badge.svg?url=https://github.com/supathdhitalGEO/msfootprint&count_bg=%2379C83D&title_bg=%23555555&icon=github.svg&icon_color=%23E7E7E7&title=Views&edge_flat=false)
+[![PyPI version](https://badge.fury.io/py/msfootprint.svg)](https://pypi.org/project/msfootprint/)
+[![Downloads](https://pepy.tech/badge/msfootprint)](https://pepy.tech/project/msfootprint)
+
 ## Microsoft Building Footprint Extracter based on user defined boundary
 
 This tool allows users to retrieve microsoft global building footprint data based on a specified boundary (such as a shapefile or GeoJSON). The footprints are then saved as GeoJSON files to a specified output directory.
