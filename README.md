@@ -3,6 +3,7 @@
 ![Views](https://hits.seeyoufarm.com/api/count/incr/badge.svg?url=https://github.com/supathdhitalGEO/msfootprint&count_bg=%2379C83D&title_bg=%23555555&icon=github.svg&icon_color=%23E7E7E7&title=Views&edge_flat=false)
 [![PyPI version](https://badge.fury.io/py/msfootprint.svg)](https://pypi.org/project/msfootprint/)
 [![PyPI Downloads](https://static.pepy.tech/badge/msfootprint)](https://pepy.tech/projects/msfootprint)
+[![DOI](https://zenodo.org/badge/905441761.svg)](https://doi.org/10.5281/zenodo.14595247)
 
 ## Microsoft Building Footprint Extracter based on user defined boundary
 
