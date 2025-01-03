@@ -1,11 +1,4 @@
-
-[![Version](https://img.shields.io/github/v/release/supathdhitalGEO/msfootprint)](https://github.com/supathdhitalGEO/msfootprint/releases)
-![Views](https://hits.seeyoufarm.com/api/count/incr/badge.svg?url=https://github.com/supathdhitalGEO/msfootprint&count_bg=%2379C83D&title_bg=%23555555&icon=github.svg&icon_color=%23E7E7E7&title=Views&edge_flat=false)
-[![PyPI version](https://badge.fury.io/py/msfootprint.svg)](https://pypi.org/project/msfootprint/)
-[![PyPI Downloads](https://static.pepy.tech/badge/msfootprint)](https://pepy.tech/projects/msfootprint)
-[![DOI](https://zenodo.org/badge/905441761.svg)](https://doi.org/10.5281/zenodo.14595247)
-
-## Microsoft global building footprint extractor (msfootprint) based on user defined boundary
+## ```msfootprint```: A Python package for extracting Microsoft's global building footprints based on user-defined boundaries
 
 This tool allows users to retrieve microsoft global building footprint data based on a specified boundary (such as a shapefile or GeoJSON). The footprints are then saved as GeoJSON files to a specified output directory.
 
@@ -57,8 +50,24 @@ msf.getBuildingFootprint(country, boundary_shp, out_dir)
 ```
 It will save the building footprint as geojson format in designated location.
 
-**For more information about how building footprints are hosted online and to learn about the tables and folder structure, [visit here](https://gee-community-catalog.org/projects/msbuildings/).**
+## Cite this Work
+If you use ```msfootprint``` in your work, please cite it as follows:
 
+```
+Dhital, S. (2025). msfootprint: A Python package for extracting Microsoft's global building footprints based on user-defined boundaries (v0.1.23). Zenodo. https://doi.org/10.5281/zenodo.14595359 
+```
+in BibTex,
+```
+@software{dhital2025msfootprint,
+  author       = {S. Dhital},
+  title        = {msfootprint: A Python package for extracting Microsoft's global building footprints based on user-defined boundaries},
+  version      = {v0.1.23},
+  year         = {2025},
+  publisher    = {Zenodo},
+  doi          = {10.5281/zenodo.14595359},
+  url          = {https://doi.org/10.5281/zenodo.14595359}
+}
+```
 ## For Any Information
 
 Feel free to reach out to me:
