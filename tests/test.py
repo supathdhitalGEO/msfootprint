@@ -4,7 +4,8 @@ from pathlib import Path
 
 # Import the boundary: It supports .GPKG, .KML. .SHP, .GEOJSON
 boundary_file = Path(
-    "../src/msfootprint/data/us_boundary.gpkg"
+    # "../sample_boundary/test.gpkg"
+    "/Users/supath/Downloads/MSResearch/BFootprint/msfootprint/sample_boundary/test.gpkg"
 )
 
 # Country that your boundary Falls in title case (eg, Nepal, China, Costa_Rica, Kingdom_of_Saudi_Arabia etc)
@@ -21,4 +22,4 @@ msf.FindTableorFolder(
 country_boundary = "US"  # My boundary file is within the Arkansas state of US
 
 # Get the building footprint
-# msf.getBuildingFootprint(country_boundary, boundary_file, out_dir)
+msf.getBuildingFootprint(country_boundary, boundary_file, out_dir)

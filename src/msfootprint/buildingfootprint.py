@@ -1,46 +1,27 @@
 # Importing necessary libraries
 import geemap
 import ee
+import os
+from shapely.geometry import box
+import pandas as pd
 from pathlib import Path
 import geopandas as gpd
+from pyspark.sql import SparkSession
+from shapely.wkt import loads
+import shutil
 
-from .find_footprinttable import getstates
-from .find_footprinttable import BFonboundary
+from .find_footprinttable import get_intersecting_states
+from .find_footprinttable import load_USStates
+
+#Suppress the warnings
+import warnings
+warnings.filterwarnings("ignore")
 
 # %%
 # Authenticate and initialize Earth Engine
 ee.Authenticate()
 ee.Initialize()
 geemap.ee_initialize()
-
-
-# %%
-# Change the boundary shapefile to a geojson file
-def get_eesupported_roi(boundary_file):
-    boundary_file = Path(boundary_file)
-
-    valid_extensions = [".shp", ".gpkg", ".kml", ".geojson", ".json"]
-    if boundary_file.suffix.lower() not in valid_extensions:
-        raise ValueError(
-            f"Unsupported file format: {boundary_file.suffix}. Supported formats are: {', '.join(valid_extensions)}"
-        )
-    if boundary_file.suffix.lower() == ".kml":
-        shp = gpd.read_file(boundary_file, driver="KML")
-    elif boundary_file.suffix.lower() == ".gpkg":
-        shp = gpd.read_file(boundary_file)
-    else:
-        shp = gpd.read_file(boundary_file)
-    if shp.crs is None:
-        raise ValueError(
-            "Input file has no CRS. Please ensure the file has a valid CRS."
-        )
-    shp = shp.to_crs(epsg=4326)
-    roi_geom = shp.geometry.values[0]
-    roi_geojson = roi_geom.__geo_interface__
-    roi_ee = ee.Geometry(roi_geojson)
-    return roi_ee
-
-
 # %%
 def FindTableorFolder(country):
     asset_path = f"projects/sat-io/open-datasets/MSBuildings/{country}"
@@ -79,33 +60,104 @@ def FindTableorFolder(country):
             print(
                 f"\033[1mError: '{country}' is neither a folder nor a valid table. Details: {inner_e}\033[0m"
             )
+            
+#%%
+def split_into_tiles(boundary, tile_size=0.1):
+    bounds = boundary.total_bounds
+    x_min, y_min, x_max, y_max = bounds
+    tiles = []
+    x = x_min
+    while x < x_max:
+        y = y_min
+        while y < y_max:
+            tile = box(x, y, x + tile_size, y + tile_size)
+            if tile.intersects(boundary.unary_union):
+                tiles.append(tile)
+            y += tile_size
+        x += tile_size
+    return gpd.GeoDataFrame(geometry=tiles, crs=boundary.crs)
 
+#Merge the final geojson files
+def mergeGeoJSONfiles(output_dir, merged_file):
+    output_dir = Path(output_dir)
+    files = list(output_dir.glob("*.geojson"))
+    gdfs = [gpd.read_file(file) for file in files]
+    merged_gdf = gpd.GeoDataFrame(pd.concat(gdfs, ignore_index=True), crs="EPSG:4326")
+    merged_gdf.to_file(merged_file, driver="GPKG") 
 
-# %%
-# GEE supported ROI
-def getBF(country_name, study_area):
-    studyarea = get_eesupported_roi(study_area)
-    collection_BF = ee.FeatureCollection(
-        f"projects/sat-io/open-datasets/MSBuildings/{country_name}"
-    )
-    filtered_buildings = collection_BF.filterBounds(studyarea)
-    geojson = geemap.ee_to_geojson(filtered_buildings)
-    return geojson
+#Process each batch with number of tiles
+def process_batch(partition, collection_name, output_dir, boundary_wkt):
+    ee.Initialize()
 
+    # Convert WKT boundary to geometry
+    boundary = loads(boundary_wkt)
+    results = []
 
+    for tile_wkt in partition:
+        try:
+            tile = loads(tile_wkt)
+            aoi = ee.Geometry(tile.__geo_interface__)
+            collection = ee.FeatureCollection(collection_name).filterBounds(aoi)
+
+            # Download features and filter by boundary
+            gdf = geemap.ee_to_gdf(collection)
+            gdf = gdf[gdf.geometry.intersects(boundary)]
+
+            # Save each tile as a GeoJSON file
+            tile_id = f"tile_{hash(tile)}"
+            output_file = Path(output_dir) / f"{tile_id}.geojson"
+            gdf.to_file(output_file, driver="GeoJSON")
+            results.append(f"Saved: {output_file}")
+        except Exception as e:
+            results.append(f"Error processing tile: {e}")
+
+    return results
+
+def getBuildingFootprintSpark(country, boundary_file, out_dir, tile_size):
+    spark = SparkSession.builder.appName("BuildingFootprints").getOrCreate()
+    
+    #Make temporary directory
+    temp_dir = out_dir / "temp"
+    temp_dir.mkdir(parents=True, exist_ok=True)
+
+    # Load and process boundary
+    boundary = gpd.read_file(boundary_file).to_crs("EPSG:4326")
+    tiles = split_into_tiles(boundary, tile_size)
+    boundary_wkt = boundary.unary_union.wkt
+
+    # Collection name(s)
+    if country == "US":
+        us_states = load_USStates()
+        states = get_intersecting_states(boundary, us_states)["STATE"].tolist()
+        collection_names = [
+            f"projects/sat-io/open-datasets/MSBuildings/{country}/{state}" for state in states
+        ]
+    else:
+        collection_names = [f"projects/sat-io/open-datasets/MSBuildings/{country}"]
+
+    # Distribute processing
+    for collection_name in collection_names:
+        tiles_rdd = spark.sparkContext.parallelize(tiles.geometry.apply(lambda x: x.wkt).tolist(), numSlices=10)
+        results = tiles_rdd.mapPartitions(
+            lambda partition: process_batch(partition, collection_name, str(temp_dir), boundary_wkt)
+        ).collect()
+
+    # Merge GeoJSON files
+    mergeGeoJSONfiles(temp_dir, out_dir / "building_footprint.gpkg")
+
+    # Clean up the temp directory
+    shutil.rmtree(temp_dir, ignore_errors=True)
+
+    print(f"Building footprint data saved to {out_dir / 'building_footprint.gpkg'}")
 # %%
 # Export the building footprint
 def getBuildingFootprint(country, ROI, out_dir):
     out_dir = Path(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
-    filename = out_dir / "building_footprint.geojson"
-
-    if country == "US":
-        states = getstates(ROI)
-        BF_footprint = BFonboundary(country, states, ROI)
-        BF_footprint.to_file(filename, driver="GeoJSON")
-    else:
-        BF_footprint = getBF(country, ROI)
-        BF_footprint.to_file(filename, driver="GeoJSON")
-
-    print(f"Data saved to {out_dir}")
+    filename = out_dir / "building_footprint.gpkg"
+    
+    if filename.exists():
+        os.remove(filename)
+        
+    getBuildingFootprintSpark(country, ROI, out_dir, tile_size=0.05)
+    

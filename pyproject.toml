@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "msfootprint"
-version = "0.1.2"
+version = "0.1.25"
 description = "A tool to extract the microsoft building footprints with user defined boundary."
 authors = ["supathdhitalGEO <sdhital@crimson.ua.edu>"]
 readme = "README.md"
@@ -13,6 +13,7 @@ geemap = "^0.35.1"
 geopandas = "^1.0.1"
 fiona = "^1.10.1"
 pytest = "^8.3.4"
+pyspark = "^3.5.4"
 
 
 [build-system]

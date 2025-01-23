@@ -6,12 +6,15 @@
 
 ## ```msfootprint```: A Python package for extracting Microsoft's global building footprints based on user-defined boundaries
 
-This tool allows users to retrieve microsoft global building footprint data based on a specified boundary (such as a shapefile or GeoJSON). The footprints are then saved as GeoJSON files to a specified output directory.
+This tool allows users to retrieve microsoft global building footprint data based on a specified boundary (such as a shapefile or GeoJSON). The footprints are then saved as Geopackage file to a specified output directory.
+
+The computational engine of ```msfootprint``` leverages PySpark and split large areas into smaller tiles for parallel processing. Each tile is processed concurrently, significantly reducing execution time. PySpark's distributed architecture ensures efficient data handling and fault tolerance, enabling fast and reliable downloading of large geospatial datasets.  
 
 ### Features
 
 - Supports multiple boundary input file formats: `.shp`, `.gpkg`, `.kml`, `.geojson`.
 - Allows users to specify a boundary and retrieve building footprint data for a specific country or region or small study area.
+- Faster downloading, feasible for large scale data download.
 - Compatible with Google Earth Engine (GEE)/ required GEE authentications.
 
 ## Usage
