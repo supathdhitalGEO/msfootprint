@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "msfootprint"
-version = "0.1.25"
+version = "0.1.26"
 description = "A tool to extract the microsoft building footprints with user defined boundary."
 authors = ["supathdhitalGEO <sdhital@crimson.ua.edu>"]
 readme = "README.md"
