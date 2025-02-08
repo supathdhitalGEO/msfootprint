@@ -39,23 +39,15 @@ import pathlib as Path
 boundary_shp = Path('./shapefile_directory')
 out_dir = Path('./output_directory')
 
-#Import the name of country where the boundary is located
-country = 'Nepal'
-
-#In some cases, like 'Indonesia', it has seperate feature collection so to get the information about whether you can directly pass country boundary or need to be more specific with which table  contains your ROI, try this:
-msf.FindTableorFolder('Indonesia')
-
-#It is not direct table, it contains several statewise table so it will reflect sub collections name/boundaries.
-
-#So if your boundary falls within specific table inside the country (incase it  contains multiple tables) defined as
-country = "Indonesia/{table_name}"
+#Import the 3 letter country ISO code of your study area, Eg. For Nepal, NPL, for United States of America it will be 'USA'
+countryISO = 'USA'
 ```
 
 **For US, it is automated, so no need to give statename but for other countries having multiple tables need to follow aforementioned step**
 
 **Now, run the main script**
 ```bash
-msf.getBuildingFootprint(country, boundary_shp, out_dir)
+msf.BuildingFootprintwithISO(countryISO, boundary_shp, out_dir)
 ```
 It will save the building footprint as geojson format in designated location.
 
