@@ -10,8 +10,9 @@ from pyspark.sql import SparkSession
 from shapely.wkt import loads
 import shutil
 
-#Suppress the warnings
+# Suppress the warnings
 import warnings
+
 warnings.filterwarnings("ignore")
 
 # %%
@@ -20,7 +21,8 @@ ee.Authenticate()
 ee.Initialize()
 geemap.ee_initialize()
 
-#%%
+
+# %%
 def split_into_tiles(boundary, tile_size=0.1):
     bounds = boundary.total_bounds
     x_min, y_min, x_max, y_max = bounds
@@ -36,15 +38,17 @@ def split_into_tiles(boundary, tile_size=0.1):
         x += tile_size
     return gpd.GeoDataFrame(geometry=tiles, crs=boundary.crs)
 
-#Merge the final geojson files
+
+# Merge the final geojson files
 def mergeGeoJSONfiles(output_dir, merged_file):
     output_dir = Path(output_dir)
     files = list(output_dir.glob("*.geojson"))
     gdfs = [gpd.read_file(file) for file in files]
     merged_gdf = gpd.GeoDataFrame(pd.concat(gdfs, ignore_index=True), crs="EPSG:4326")
-    merged_gdf.to_file(merged_file, driver="GPKG") 
+    merged_gdf.to_file(merged_file, driver="GPKG")
 
-#Process each batch with number of tiles
+
+# Process each batch with number of tiles
 def process_batch(partition, collection_name, output_dir, boundary_wkt):
     ee.Initialize()
 
@@ -72,10 +76,11 @@ def process_batch(partition, collection_name, output_dir, boundary_wkt):
 
     return results
 
+
 def getBuildingFootprintSpark(countryISO, boundary_file, out_dir, tile_size):
     spark = SparkSession.builder.appName("BuildingFootprints").getOrCreate()
-    
-    #Make temporary directory
+
+    # Make temporary directory
     temp_dir = out_dir / "temp"
     temp_dir.mkdir(parents=True, exist_ok=True)
 
@@ -88,9 +93,13 @@ def getBuildingFootprintSpark(countryISO, boundary_file, out_dir, tile_size):
 
     # Distribute processing
     for collection_name in collection_names:
-        tiles_rdd = spark.sparkContext.parallelize(tiles.geometry.apply(lambda x: x.wkt).tolist(), numSlices=10)
+        tiles_rdd = spark.sparkContext.parallelize(
+            tiles.geometry.apply(lambda x: x.wkt).tolist(), numSlices=10
+        )
         results = tiles_rdd.mapPartitions(
-            lambda partition: process_batch(partition, collection_name, str(temp_dir), boundary_wkt)
+            lambda partition: process_batch(
+                partition, collection_name, str(temp_dir), boundary_wkt
+            )
         ).collect()
 
     # Merge GeoJSON files
@@ -100,15 +109,16 @@ def getBuildingFootprintSpark(countryISO, boundary_file, out_dir, tile_size):
     shutil.rmtree(temp_dir, ignore_errors=True)
 
     print(f"Building footprint data saved to {out_dir / 'building_footprint.gpkg'}")
+
+
 # %%
 # Export the building footprint
 def BuildingFootprintwithISO(countryISO, ROI, out_dir):
     out_dir = Path(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
     filename = out_dir / "building_footprint.gpkg"
-    
+
     if filename.exists():
         os.remove(filename)
-        
+
     getBuildingFootprintSpark(countryISO, ROI, out_dir, tile_size=0.05)
-    

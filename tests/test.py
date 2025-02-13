@@ -25,7 +25,7 @@ country_boundary = "US"  # My boundary file is within the Arkansas state of US
 # msf.getBuildingFootprint(country_boundary, boundary_file, out_dir)
 
 
-#Using 3 letter country ISO code, like 'USA', 'NPL', 'CHN', 'SAU' etc
+# Using 3 letter country ISO code, like 'USA', 'NPL', 'CHN', 'SAU' etc
 countryISO = "USA"
 
 msf.BuildingFootprintwithISO(countryISO, boundary_file, out_dir)

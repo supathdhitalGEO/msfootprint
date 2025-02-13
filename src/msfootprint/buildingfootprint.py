@@ -13,8 +13,9 @@ import shutil
 from .find_footprinttable import get_intersecting_states
 from .find_footprinttable import load_USStates
 
-#Suppress the warnings
+# Suppress the warnings
 import warnings
+
 warnings.filterwarnings("ignore")
 
 # %%
@@ -22,6 +23,8 @@ warnings.filterwarnings("ignore")
 ee.Authenticate()
 ee.Initialize()
 geemap.ee_initialize()
+
+
 # %%
 def FindTableorFolder(country):
     asset_path = f"projects/sat-io/open-datasets/MSBuildings/{country}"
@@ -60,8 +63,9 @@ def FindTableorFolder(country):
             print(
                 f"\033[1mError: '{country}' is neither a folder nor a valid table. Details: {inner_e}\033[0m"
             )
-            
-#%%
+
+
+# %%
 def split_into_tiles(boundary, tile_size=0.1):
     bounds = boundary.total_bounds
     x_min, y_min, x_max, y_max = bounds
@@ -77,15 +81,17 @@ def split_into_tiles(boundary, tile_size=0.1):
         x += tile_size
     return gpd.GeoDataFrame(geometry=tiles, crs=boundary.crs)
 
-#Merge the final geojson files
+
+# Merge the final geojson files
 def mergeGeoJSONfiles(output_dir, merged_file):
     output_dir = Path(output_dir)
     files = list(output_dir.glob("*.geojson"))
     gdfs = [gpd.read_file(file) for file in files]
     merged_gdf = gpd.GeoDataFrame(pd.concat(gdfs, ignore_index=True), crs="EPSG:4326")
-    merged_gdf.to_file(merged_file, driver="GPKG") 
+    merged_gdf.to_file(merged_file, driver="GPKG")
 
-#Process each batch with number of tiles
+
+# Process each batch with number of tiles
 def process_batch(partition, collection_name, output_dir, boundary_wkt):
     ee.Initialize()
 
@@ -113,10 +119,11 @@ def process_batch(partition, collection_name, output_dir, boundary_wkt):
 
     return results
 
+
 def getBuildingFootprintSpark(country, boundary_file, out_dir, tile_size):
     spark = SparkSession.builder.appName("BuildingFootprints").getOrCreate()
-    
-    #Make temporary directory
+
+    # Make temporary directory
     temp_dir = out_dir / "temp"
     temp_dir.mkdir(parents=True, exist_ok=True)
 
@@ -130,16 +137,21 @@ def getBuildingFootprintSpark(country, boundary_file, out_dir, tile_size):
         us_states = load_USStates()
         states = get_intersecting_states(boundary, us_states)["STATE"].tolist()
         collection_names = [
-            f"projects/sat-io/open-datasets/MSBuildings/{country}/{state}" for state in states
+            f"projects/sat-io/open-datasets/MSBuildings/{country}/{state}"
+            for state in states
         ]
     else:
         collection_names = [f"projects/sat-io/open-datasets/MSBuildings/{country}"]
 
     # Distribute processing
     for collection_name in collection_names:
-        tiles_rdd = spark.sparkContext.parallelize(tiles.geometry.apply(lambda x: x.wkt).tolist(), numSlices=10)
+        tiles_rdd = spark.sparkContext.parallelize(
+            tiles.geometry.apply(lambda x: x.wkt).tolist(), numSlices=10
+        )
         results = tiles_rdd.mapPartitions(
-            lambda partition: process_batch(partition, collection_name, str(temp_dir), boundary_wkt)
+            lambda partition: process_batch(
+                partition, collection_name, str(temp_dir), boundary_wkt
+            )
         ).collect()
 
     # Merge GeoJSON files
@@ -149,15 +161,16 @@ def getBuildingFootprintSpark(country, boundary_file, out_dir, tile_size):
     shutil.rmtree(temp_dir, ignore_errors=True)
 
     print(f"Building footprint data saved to {out_dir / 'building_footprint.gpkg'}")
+
+
 # %%
 # Export the building footprint
 def getBuildingFootprint(country, ROI, out_dir):
     out_dir = Path(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
     filename = out_dir / "building_footprint.gpkg"
-    
+
     if filename.exists():
         os.remove(filename)
-        
+
     getBuildingFootprintSpark(country, ROI, out_dir, tile_size=0.05)
-    
