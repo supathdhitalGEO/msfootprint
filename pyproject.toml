@@ -9,12 +9,15 @@ repository = "https://github.com/supathdhitalGEO/msfootprint"
 
 [tool.poetry.dependencies]
 python = "^3.10"
+setuptools = "*"  
 geemap = "^0.35.1"
 geopandas = "^1.0.1"
 fiona = "^1.10.1"
 pytest = "^8.3.4"
 pyspark = "^3.5.4"
 
+[tool.setuptools_scm]
+write_to = "src/your_package/_version.py"
 
 [build-system]
 requires = ["poetry-core"]
