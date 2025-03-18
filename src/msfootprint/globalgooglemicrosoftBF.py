@@ -15,12 +15,8 @@ import warnings
 
 warnings.filterwarnings("ignore")
 
-# %%
 # Authenticate and initialize Earth Engine
 ee.Authenticate()
-ee.Initialize()
-geemap.ee_initialize()
-
 
 # %%
 def split_into_tiles(boundary, tile_size=0.1):
@@ -49,8 +45,15 @@ def mergeGeoJSONfiles(output_dir, merged_file):
 
 
 # Process each batch with number of tiles
-def process_batch(partition, collection_name, output_dir, boundary_wkt):
-    ee.Initialize()
+def process_batch(partition, collection_name, output_dir, boundary_wkt, projectID=None):
+    try:
+        if projectID:
+            ee.Initialize(project=projectID)
+        else:
+            ee.Initialize()
+            
+    except Exception:
+        print("To initialize, please provide the earth engine project ID")
 
     # Convert WKT boundary to geometry
     boundary = loads(boundary_wkt)
@@ -76,8 +79,7 @@ def process_batch(partition, collection_name, output_dir, boundary_wkt):
 
     return results
 
-
-def getBuildingFootprintSpark(countryISO, boundary_file, out_dir, tile_size):
+def getBuildingFootprintSpark(countryISO, boundary_file, out_dir, tile_size, projectID=None):
     spark = SparkSession.builder.appName("BuildingFootprints").getOrCreate()
 
     # Make temporary directory
@@ -98,7 +100,7 @@ def getBuildingFootprintSpark(countryISO, boundary_file, out_dir, tile_size):
         )
         results = tiles_rdd.mapPartitions(
             lambda partition: process_batch(
-                partition, collection_name, str(temp_dir), boundary_wkt
+                partition, collection_name, str(temp_dir), boundary_wkt, projectID
             )
         ).collect()
 
@@ -110,10 +112,9 @@ def getBuildingFootprintSpark(countryISO, boundary_file, out_dir, tile_size):
 
     print(f"Building footprint data saved to {out_dir / 'building_footprint.gpkg'}")
 
-
 # %%
 # Export the building footprint
-def BuildingFootprintwithISO(countryISO, ROI, out_dir):
+def BuildingFootprintwithISO(countryISO, ROI, out_dir, geeprojectID=None):
     out_dir = Path(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
     filename = out_dir / "building_footprint.gpkg"
@@ -121,4 +122,4 @@ def BuildingFootprintwithISO(countryISO, ROI, out_dir):
     if filename.exists():
         os.remove(filename)
 
-    getBuildingFootprintSpark(countryISO, ROI, out_dir, tile_size=0.05)
+    getBuildingFootprintSpark(countryISO, ROI, out_dir, tile_size=0.05, projectID=geeprojectID)

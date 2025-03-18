@@ -51,6 +51,17 @@ msf.BuildingFootprintwithISO(countryISO, boundary_shp, out_dir)
 ```
 It will save the building footprint as geojson format in designated location.
 
+**Sometimes if above code doesnot works and has a error on accessing data, it needs earth-engine projectID to access the building footprint data**
+If so, 
+
+```bash
+#mention the ee projectID
+geeprojectID = 'your-earth-engine-existing-projrct-id'
+
+#run the code
+msf.BuildingFootprintwithISO(countryISO, boundary_shp, out_dir, geeprojectID)
+```
+
 ## Cite this Work
 If you use ```msfootprint``` in your work, please cite it as follows:
 
